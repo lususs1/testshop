@@ -112,6 +112,17 @@ include(FindProtobuf)
 find_package(Protobuf)
 message(STATUS "Protobuf lib: ${Protobuf_LIBRARY}, inc: ${Protobuf_INCLUDE_DIR}, protoc: ${Protobuf_PROTOC_EXECUTABLE}")
 
+if(Protobuf_VERSION VERSION_GREATER_EQUAL "6.22.0") # v22.0+ (2022)
+    find_package(absl REQUIRED COMPONENTS log_internal_check_op log_internal_message)
+    if(absl_FOUND)
+        message(STATUS "Protobuf ${Protobuf_VERSION}: Linking Abseil for logging support")
+        set(Abseil_LIBRARY absl::log_internal_check_op absl::log_internal_message)
+    endif()
+    if(NOT absl_FOUND)
+        message(FATAL_ERROR "Abseil required for Protobuf ${Protobuf_VERSION} but not found. Install: sudo pacman -S abseil-cpp")
+    endif()
+endif()
+
 ######################################
 # LibUSB
 find_library(usb_LIBRARY NAMES usb-1.0 libusb usb)
@@ -321,7 +332,7 @@ set(monero_include_dirs ${MONERO_ROOT_DIR}/contrib/epee/include
     ${UNBOUND_INCLUDE_DIR}
 )
 set(monero_src wallet rpc_base net lmdb unbound easylogging cryptonote_core cryptonote_protocol cryptonote_basic cryptonote_format_utils_basic mnemonics ringct ringct_basic common blockchain_db blocks checkpoints device device_trezor cncrypto multisig version randomx epee hardforks ${wallet_crypto} 
-${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
+${UNBOUND_LIBRARIES} ${Boost_LIBRARIES} ${Protobuf_LIBRARY} ${Abseil_LIBRARY} ${LibUSB_LIBRARIES} ${OPENSSL_LIBRARIES} ${SODIUM_LIBRARY} ${HIDAPI_LIBRARY} ${EXTRA_LIBRARIES})
 
 ######################################
 # monero-cpp (wrapper)
