@@ -121,7 +121,14 @@ set(LibUSB_LIBRARIES ${usb_LIBRARY})
 # Boost
 set(Boost_NO_BOOST_CMAKE 1)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.58 QUIET REQUIRED COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
+set(Boost_COMPONENTS chrono date_time filesystem program_options regex serialization wserialization system thread)
+find_package(Boost 1.58 QUIET COMPONENTS ${Boost_COMPONENTS})
+# Remove 'system' if Boost 1.89+
+if(Boost_VERSION_MAJOR LESS 1 OR (Boost_VERSION_MAJOR EQUAL 1 AND Boost_VERSION_MINOR GREATER_EQUAL 89))
+    list(REMOVE_ITEM Boost_COMPONENTS system)
+endif()
+# Final REQUIRED find with corrected components
+find_package(Boost 1.58 QUIET REQUIRED COMPONENTS ${Boost_COMPONENTS})
 message(STATUS "Using Boost include dir at ${Boost_INCLUDE_DIR}")
 add_definitions(-DBOOST_DISABLE_PRAGMA_MESSAGE)
 
