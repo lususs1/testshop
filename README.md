@@ -90,7 +90,7 @@ sudo apt install build-essential cmake git
 ```
 Arch
 ```bash
-sudo pacman -Sy --needed base-devel cmake git
+sudo pacman -S --needed base-devel cmake git
 ```
 Fedora
 ```bash
