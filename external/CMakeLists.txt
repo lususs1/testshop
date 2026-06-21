@@ -106,7 +106,7 @@ if(Protobuf_FOUND AND PROTOC_EXECUTABLE)
 endif()
 
 # Detect OS
-set(TOR_BROWSER_VERSION "15.0.2")
+set(TOR_BROWSER_VERSION "15.0.16")
 if(WIN32)
     set(TOR_OS "windows")
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
