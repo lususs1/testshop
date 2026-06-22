@@ -87,7 +87,7 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
             }
 
             // Connect to the daemon
-            connect();    
+            connectToDaemon();
         });
         // Detach the thread, so it runs independently
         connectionThread.detach();
@@ -96,12 +96,12 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
 
     // Note: If the calling process exits, the detached process will continue to run unaffected.
     bool success = QProcess::startDetached(program, {}, QString(), &pid);
-    if(!success) { 
+    if(!success) {
         throw std::runtime_error("neroshop daemon process could not be started");
     }
     std::cout << "\033[35;1mneroshopd started (pid: " << pid << ")\033[0m\n";
     setDaemonRunning(true);
-    
+
     std::thread connectionThread([this]() {
         // Wait for the port to be bound before attempting to connect
         while (!isDaemonServerBound()) {
@@ -109,7 +109,7 @@ void neroshop::DaemonManager::startDaemonProcessDetached() {
         }
 
         // Connect to the daemon
-        connect();    
+        connectToDaemon();
     });
     // Detach the thread, so it runs independently
     connectionThread.detach();
@@ -133,7 +133,7 @@ void neroshop::DaemonManager::terminateDaemonProcess() {
     process.waitForFinished();
 }
 
-void neroshop::DaemonManager::connect() {    
+void neroshop::DaemonManager::connectToDaemon() {
     // Lock the mutex before accessing the client object
     //std::lock_guard<std::mutex> lock(clientMutex);
     

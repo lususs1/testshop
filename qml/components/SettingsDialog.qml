@@ -1688,33 +1688,42 @@ Item {
                                 id: proxyBox
                                 anchors.right: parent.right
                                 width: settingsStack.comboBoxWidth; indicatorWidth: settingsStack.comboBoxButtonWidth
-                                model: ["None", "Tor"/*, "i2p"*/]
-                                currentIndex: (ProxyManager.hasTor() || ProxyManager.isTorRunning()) ? model.indexOf("Tor") : model.indexOf("None")//model.indexOf(Settings.getString("proxy/type"))
+                                model: ["None", "Tor"]
+                                currentIndex: model.indexOf("None")//model.indexOf(Settings.getString("proxy/type"))
                                 Component.onCompleted: {
-                                    if(ProxyManager.hasTor()) {
-                                        ProxyManager.startTorDaemon()
-                                    } else {
-                                        if(ProxyManager.isTorRunning()) {
-                                            ProxyManager.useTorProxy()
-                                            ProxyManager.setExternalProcess(true)
-                                        }
-                                    }
-                                    
-                                    if(ProxyManager.isTorEnabled()) {
-                                        toast.showNotification("Tor enabled")
+                                    // Wait and see if external tor is ready to be used
+                                    ProxyManager.waitTorDaemon()
+                                }
+                                Connections {
+                                    target: ProxyManager
+
+                                    function onTorReady() {
+                                        ProxyManager.useTorProxy();
+                                        ProxyManager.setExternalProcess(true);
+                                        proxyBox.currentIndex = proxyBox.model.indexOf("Tor")
+                                        toast.showNotification("Tor is ready")
                                     }
                                 }
                                 onActivated: {
                                     if(currentText == "None") {
                                         ProxyManager.stopTorDaemon()
                                         ProxyManager.useDefaultProxy()
+
+                                        if(!ProxyManager.isTorEnabled()) {
+                                            toast.showNotification("Tor disabled")
+                                        }
                                     }
                                     if(currentText == "Tor") {
-                                        ProxyManager.startTorDaemon() // calls useTorProxy()
-                                    }
-                                    if(currentText == "i2p") {
-                                        ProxyManager.stopTorDaemon()
-                                        ProxyManager.useI2PProxy()
+                                        if(ProxyManager.isTorReady()) { // daemon tor instance
+                                            ProxyManager.useTorProxy()
+                                        } else {
+                                            //ProxyManager.startTorDaemon() // calls useTorProxy()
+                                            // This mode assumes internal tor process controlled by the GUI itself
+                                        }
+
+                                        if(ProxyManager.isTorEnabled()) {
+                                            toast.showNotification("Tor enabled")
+                                        }
                                     }
                                 }
                                 onCurrentTextChanged: settingsDialog.save()

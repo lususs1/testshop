@@ -8,6 +8,8 @@
 #include <QQmlNetworkAccessManagerFactory>
 #include <QNetworkReply>
 #include <QProcess>
+#include <QFileSystemWatcher>
+#include <QTimer>
 
 namespace neroshop {
     
@@ -29,6 +31,7 @@ public:
     Q_INVOKABLE static void downloadTor();
     Q_INVOKABLE void startTorDaemon();
     Q_INVOKABLE void stopTorDaemon();
+    Q_INVOKABLE void waitTorDaemon();
     
     Q_INVOKABLE void setExternalProcess(bool externalProcess);
     void setTorEnabled(bool torEnabled);
@@ -44,15 +47,19 @@ public:
     Q_INVOKABLE static bool isTorRunning();
     Q_INVOKABLE bool isExternalProcess() const;
     Q_INVOKABLE bool isTorEnabled() const;
+    Q_INVOKABLE bool isTorReady() const;
 public slots:    
     QNetworkReply * getUrl(const QString& url);
     void onReplyFinished(QNetworkReply * reply);
+    void onTorLogChanged();
 signals:
     void networkProxyChanged();
     void processChanged();
     void processStarted();
     void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void torOutputChanged(const QString &output);
+    void torProgressChanged(int percent);
+    void torReady();
 private:
     static void extractTar(const QString& fileName);
     QNetworkAccessManager * clearnetManager;
@@ -60,8 +67,16 @@ private:
     QNetworkAccessManager * i2pManager;
     bool m_externalProcess;
     bool m_torEnabled; // tor status
+    bool m_torReady; // tor bootstrap @ 100%
     QProcess *torProcess = nullptr;
     QString torOutput;
+    //----------------------------
+    QFileSystemWatcher* logWatcher = nullptr;
+    QString torLogPath;
+    qint64 torLogPosition = 0;
+    bool m_watchingTorLog = false;
+    void watchTorLog();
+    void parseTorLine(const QString& line);
 };
 
 }

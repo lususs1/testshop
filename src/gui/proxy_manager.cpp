@@ -8,13 +8,18 @@
 #include <QNetworkRequest>
 #include <QString>
 #include <QUrl>
+#include <QRegularExpression>
 
 #include "../neroshop_config.hpp"
 #include "../core/tools/filesystem.hpp"
 #include "../core/tools/device.hpp"
 
-neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_externalProcess(false), m_torEnabled(false) {
-    torManager = new QNetworkAccessManager(this);
+constexpr int TOR_SOCKS_PORT = 9052;
+//constexpr int I2P_SOCKS_PORT = 4447; // 4448?
+
+neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_externalProcess(false), m_torEnabled(false), m_torReady(false) {
+    // Note: torManager and i2pManager are never actually used and remain obsolete
+    /*torManager = new QNetworkAccessManager(this);
     i2pManager = new QNetworkAccessManager(this);
     clearnetManager = new QNetworkAccessManager(this);
     
@@ -32,8 +37,22 @@ neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_exter
     QNetworkProxy i2pProxy;
     i2pProxy.setType(QNetworkProxy::Socks5Proxy);
     i2pProxy.setHostName("127.0.0.1");
-    i2pProxy.setPort(4447); // 4448?
-    i2pManager->setProxy(i2pProxy);
+    i2pProxy.setPort(4447);
+    i2pManager->setProxy(i2pProxy);*/
+
+    torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/tor.log");
+
+    connect(this, &ProxyManager::torProgressChanged,
+            this, [](int p) {
+                //qDebug() << "Tor progress (GUI):" << p;
+            });
+
+    // QML will handle when tor is ready, so no need for this...
+    /*connect(this, &ProxyManager::torReady,
+            this, [this]() {
+                useTorProxy();
+                setExternalProcess(true);
+            });*/
 }
     
 neroshop::ProxyManager::~ProxyManager() {}
@@ -49,7 +68,7 @@ QNetworkAccessManager * neroshop::ProxyManager::create(QObject *parent) {
         QNetworkProxy torProxy;
         torProxy.setType(QNetworkProxy::Socks5Proxy);
         torProxy.setHostName("127.0.0.1");
-        torProxy.setPort(9050);
+        torProxy.setPort(TOR_SOCKS_PORT);
         networkAccessManager->setProxy(torProxy);
         // Standard QML components like Image or XmlHttpRequest can now make network requests over Tor
     }
@@ -67,7 +86,7 @@ void neroshop::ProxyManager::useTorProxy() {
     QNetworkProxy torProxy;
     torProxy.setType(QNetworkProxy::Socks5Proxy);
     torProxy.setHostName("127.0.0.1");
-    torProxy.setPort(9050);
+    torProxy.setPort(TOR_SOCKS_PORT);
     QNetworkProxy::setApplicationProxy(torProxy);
     
     setTorEnabled(true); // also emits networkProxyChanged() signal
@@ -84,19 +103,20 @@ void neroshop::ProxyManager::useI2PProxy() {
 }
 
 QNetworkAccessManager * neroshop::ProxyManager::getNetworkClearnet() const {
-    return clearnetManager;
+    return nullptr;//return clearnetManager;
 }
 
 QNetworkAccessManager * neroshop::ProxyManager::getNetworkTor() const {
-    return torManager;
+    return nullptr;//return torManager;
 }
 
 QNetworkAccessManager * neroshop::ProxyManager::getNetworkI2P() const {
-    return i2pManager;
+    return nullptr;//return i2pManager;
 }
 
 QNetworkAccessManager * neroshop::ProxyManager::getNetwork() const {
-    QNetworkProxyQuery query(QUrl("http://example.com"));
+    // Note: This code is not used anywhere...
+    /*QNetworkProxyQuery query(QUrl("http://example.com"));
     QList<QNetworkProxy> proxies = QNetworkProxyFactory::proxyForQuery(query);
     
     if (proxies.isEmpty()) {
@@ -124,7 +144,7 @@ QNetworkAccessManager * neroshop::ProxyManager::getNetwork() const {
             case QNetworkProxy::FtpCachingProxy: return nullptr;
             default: return clearnetManager;
         }
-    }
+    }*/
     
     return nullptr;
 }
@@ -232,19 +252,93 @@ void neroshop::ProxyManager::extractTar(const QString& fileName) {
     std::remove(fileNameStdString.c_str()); // Delete the tar.gz file after we're done extracting
 }
 
-void neroshop::ProxyManager::startTorDaemon() {
+void neroshop::ProxyManager::onTorLogChanged()
+{
+    QFile file(torLogPath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    file.seek(torLogPosition);
+
+    while (!file.atEnd()) {
+        QString line = QString::fromUtf8(file.readLine()).trimmed();
+        parseTorLine(line);
+    }
+
+    torLogPosition = file.pos();
+
+    // Re-add watch if needed
+    if (!logWatcher->files().contains(torLogPath))
+        logWatcher->addPath(torLogPath);
+}
+
+void neroshop::ProxyManager::watchTorLog()
+{
+    if (m_watchingTorLog)
+        return;
+
+    if (!QFile::exists(torLogPath)) {
+        // If tor log does not exist yet, retry in one second
+        QTimer::singleShot(1000, this, &ProxyManager::watchTorLog); // one-time timer
+        return;
+    }
+
+    m_watchingTorLog = true;
+
+    if (!logWatcher) {
+        logWatcher = new QFileSystemWatcher(this);
+        logWatcher->addPath(torLogPath);
+        connect(logWatcher,
+                &QFileSystemWatcher::fileChanged,
+                this,
+                &ProxyManager::onTorLogChanged);
+    }
+}
+
+void neroshop::ProxyManager::parseTorLine(const QString& line)
+{
+    static QRegularExpression rx(R"(Bootstrapped\s+(\d+)%.*)"); // .* can be ommited
+
+    QRegularExpressionMatch m = rx.match(line);
+    if (!m.hasMatch())
+        return;
+
+    int percent = m.captured(1).toInt();
+
+    emit torProgressChanged(percent);
+
+    if (percent >= 100 && !m_torReady) {
+        m_torReady = true;
+        emit torReady();
+    }
+}
+
+void neroshop::ProxyManager::startTorDaemon() { // Suggestion: change name to connectTorDaemon()
+
+    // Update: Daemon will start Tor from now on
     std::string torDirPath = neroshop::get_default_config_path() + "/tor";
+    QString program;
     #ifdef Q_OS_WIN
-    QString program = QString::fromStdString(torDirPath + "/" + "tor.exe");
+    program = QString::fromStdString(torDirPath + "/" + "tor.exe");
     #else
-    QString program = QString::fromStdString(torDirPath + "/" + "./tor");
+    // Linux/macOS: prefer system Tor
+    if (QFile::exists("/usr/bin/tor")) {
+        program = "/usr/bin/./tor";
+    } else if (QFile::exists("/usr/local/bin/tor")) {
+        program = "/usr/local/bin/./tor";
+    } else {
+        // Fallback to bundled Tor
+        program = QString::fromStdString(torDirPath + "/" + "./tor");
+    }
     #endif
     
     QStringList arguments;
-    QString torrcPath = QString::fromStdString(torDirPath + "/torrc");
+    // Proxy should never worry about torrc - that's for the daemon tor process to deal with!!
+    /*QString torrcPath = QString::fromStdString(torDirPath + "/torrc");
     if (QFile::exists(torrcPath)) {
         arguments << "-f" << torrcPath;
-    }
+    }*/
     
     if(isTorRunning()) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";
@@ -302,11 +396,16 @@ void neroshop::ProxyManager::startTorDaemon() {
 }
 
 void neroshop::ProxyManager::stopTorDaemon() {
+    // Update: Daemon will start Tor from now on
     if(torProcess) {
         torProcess->kill(); // Terminate the process
         torProcess->deleteLater(); // Delete the QProcess instance
         torProcess = nullptr;
     }
+}
+
+void neroshop::ProxyManager::waitTorDaemon() {
+    watchTorLog();
 }
 
 void neroshop::ProxyManager::setExternalProcess(bool externalProcess) {
@@ -335,10 +434,19 @@ QNetworkReply * neroshop::ProxyManager::getUrl(const QString& url) {
 
 bool neroshop::ProxyManager::hasTor() {
     std::string torDirPath = neroshop::get_default_config_path() + "/tor";
+    std::string torExecutable;
     #ifdef Q_OS_WIN
-    std::string torExecutable = torDirPath + "/" + "tor.exe";
+    torExecutable = torDirPath + "/" + "tor.exe";
     #else
-    std::string torExecutable = torDirPath + "/" + "tor";
+    // Linux/macOS: prefer system Tor
+    if (std::filesystem::exists("/usr/bin/tor")) {
+        torExecutable = "/usr/bin/tor";
+    } else if (std::filesystem::exists("/usr/local/bin/tor")) {
+        torExecutable = "/usr/local/bin/tor";
+    } else {
+        // Fallback to bundled Tor
+        torExecutable = torDirPath + "/" + "tor";
+    }
     #endif
     
     return neroshop::filesystem::is_file(torExecutable);
@@ -346,7 +454,7 @@ bool neroshop::ProxyManager::hasTor() {
 
 bool neroshop::ProxyManager::isTorRunning() {
     QTcpSocket socket;
-    socket.connectToHost("127.0.0.1", 9050); // Connect to Tor's SOCKS proxy port
+    socket.connectToHost("127.0.0.1", TOR_SOCKS_PORT); // Connect to Tor's SOCKS proxy port
     if (!socket.waitForConnected(500)) {
         QString errorMessage = socket.errorString();
         if (errorMessage.contains("Address already in use")) {
@@ -368,6 +476,10 @@ bool neroshop::ProxyManager::isExternalProcess() const {
 
 bool neroshop::ProxyManager::isTorEnabled() const {
     return m_torEnabled;
+}
+
+bool neroshop::ProxyManager::isTorReady() const {
+    return m_torReady;
 }
 
 void neroshop::ProxyManager::onReplyFinished(QNetworkReply * reply) {

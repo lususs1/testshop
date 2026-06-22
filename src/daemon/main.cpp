@@ -288,6 +288,7 @@ int main(int argc, char** argv)
     }
     //-------------------------------------------------------
     // Start TorManager on same thread (blocking)
+    // New design idea: Tor should be started regardless of the daemon's network type so that the GUI can always connect to Tor at port 9052. The GUI will also wait for tor to be ready
     auto tor_manager = std::make_shared<neroshop::TorManager>(socks_port);
     tor_manager->start_tor();
 

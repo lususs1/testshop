@@ -22,7 +22,7 @@ public:
     
     void terminateDaemonProcess();
     
-    void connect();
+    void connectToDaemon();
     void disconnect();
     
     double getDaemonProgress() const;

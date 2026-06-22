@@ -74,7 +74,8 @@ void TorManager::create_torrc(const std::string& torrc_path, const std::string& 
         torrc_file << "SocksPort 127.0.0.1:" << socks_port << "\n"; // For outgoing connections
         torrc_file << "ControlPort 127.0.0.1:" << control_port << "\n"; // Optional: for control (GETINFO queries, etc.)
         torrc_file << "CookieAuthentication 1\n"; // ~/.config/neroshop/tor/control_auth_cookie ("locks" the control port)
-        torrc_file << "Log notice stdout\n";////torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
+        torrc_file << "Log notice stdout\n";
+        torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
         torrc_file << "\n"; // For readability and separating each local peer's hidden service
     }
     torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
@@ -118,10 +119,20 @@ void TorManager::start_tor() {
     }
 
     std::string tor_path = base_dir + "/tor";
+    std::string program;
     #ifdef _WIN32
-    std::string program = tor_path + "/" + "tor.exe";
+    // Windows: always use bundled Tor
+    program = tor_path + "/" + "tor.exe";
     #else
-    std::string program = tor_path + "/" + "./tor";
+    // Linux/macOS: prefer system Tor
+    if (std::filesystem::exists("/usr/bin/tor")) {
+        program = "/usr/bin/tor";
+    } else if (std::filesystem::exists("/usr/local/bin/tor")) {
+        program = "/usr/local/bin/tor";
+    } else {
+        // Fallback to bundled Tor
+        program = tor_path + "/" + "./tor";
+    }
     #endif
     
     // If tor binary is not found, try current_dir
@@ -135,6 +146,7 @@ void TorManager::start_tor() {
             throw std::runtime_error("Tor binary not found");
         }
     }
+    std::cout << "[TorManager]: Using Tor binary: " << program << "\n";
     tor_binary = program;
     
     // Create 'data' folder BEFORE writing torrc (Tor creates HiddenServiceDir automatically)
@@ -217,7 +229,8 @@ void TorManager::add_hidden_service(const std::string& hidden_service_dir, uint1
         torrc_file << "SocksPort 127.0.0.1:" << socks_port << "\n"; // For outgoing connections
         torrc_file << "ControlPort 127.0.0.1:" << control_port << "\n"; // Optional: for control (GETINFO queries, etc.)
         torrc_file << "CookieAuthentication 1\n"; // ~/.config/neroshop/tor/control_auth_cookie ("locks" the control port)
-        torrc_file << "Log notice stdout\n";////torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
+        torrc_file << "Log notice stdout\n";
+        torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
         torrc_file << "\n"; // For readability and separating each local peer's hidden service
     }
     torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";

@@ -7,6 +7,7 @@
 #include <QQmlContext> // QQmlContext *	QQmlApplicationEngine::rootContext()
 ////#include <QQuickView> // we're not using QQuickView for now//#include <QQmlComponent>
 #include <QStandardPaths>
+#include <QFile>
 #endif
 
 #include "currency_rate_provider.hpp"
@@ -125,6 +126,13 @@ int main(int argc, char *argv[])
             return 1;
         }
     }    
+    // Truncate Tor log before starting daemon or proxy
+    {
+        QString torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/tor.log");
+        QFile torLog(torLogPath);
+        if (torLog.exists() && torLog.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            torLog.close();
+    }
     // Create an instance of DaemonManager and expose it to QML
     DaemonManager * daemonManager = new DaemonManager(&engine);
     daemonManager->startDaemonProcessDetached();

@@ -6,6 +6,7 @@
 #include "../p2p/node.hpp"
 #include "../p2p/routing_table.hpp" // neroshop_config.hpp included here
 #include "../../database/database.hpp"
+#include "../../network/tor_manager.hpp"
 
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -191,6 +192,10 @@ std::vector<uint8_t> protobuf_process(const std::vector<uint8_t>& request, Node&
                     (*data_map)["host"] = node.get_address();
                     (*data_map)["port"] = std::to_string(node.get_port());
                     (*data_map)["network_type"] = node.get_network_type_as_string();
+                    auto tor_manager = node.get_tor_manager();
+                    if(tor_manager != nullptr) {
+                        (*data_map)["tor_bootstrap_percent"] = std::to_string(tor_manager->get_bootstrap_progress());
+                    }
 
                     // Populate repeated NodeInfo protobuf field for peers
                     auto* response_payload = resp->mutable_response(); // Response.response (ResponsePayload)
