@@ -40,19 +40,20 @@ neroshop::ProxyManager::ProxyManager(QObject* parent) : QObject(parent), m_exter
     i2pProxy.setPort(4447);
     i2pManager->setProxy(i2pProxy);*/
 
-    torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/tor.log");
+    torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/data/tor.log");
 
     connect(this, &ProxyManager::torProgressChanged,
             this, [](int p) {
                 //qDebug() << "Tor progress (GUI):" << p;
             });
 
-    // QML will handle when tor is ready, so no need for this...
-    /*connect(this, &ProxyManager::torReady,
+    connect(this, &ProxyManager::torReady,
             this, [this]() {
-                useTorProxy();
-                setExternalProcess(true);
-            });*/
+                // useTorProxy() is already called in QML, so no need to call it again
+                if(!torProcess) {
+                    setExternalProcess(true);
+                }
+            });
 }
     
 neroshop::ProxyManager::~ProxyManager() {}
@@ -340,7 +341,7 @@ void neroshop::ProxyManager::startTorDaemon() { // Suggestion: change name to co
         arguments << "-f" << torrcPath;
     }*/
     
-    if(isTorRunning()) {
+    if(isTorRunning() && !torProcess) {
         std::cout << "\033[90mtor was already running in the background\033[0m\n";
         useTorProxy();
         setExternalProcess(true);

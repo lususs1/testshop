@@ -262,7 +262,7 @@ int main(int argc, char** argv)
         std::cout << "\033[1;90mSelected overlay network: " << network_lower << "\033[0m\n";
     }
     
-    uint16_t socks_port = 9052;//9050; // <- 9050 may likely be already in use by another app
+    uint16_t socks_port = 9052;//9050; // <- 9050 may likely be already in use by another tor process
     if(result.count("socks-port")) {
         if(network_type != neroshop::NetworkType::Tor) {
             std::cerr << "Error: --socks-port option is only valid with --network tor\n";

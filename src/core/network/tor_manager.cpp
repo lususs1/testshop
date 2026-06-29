@@ -76,7 +76,7 @@ void TorManager::create_torrc(const std::string& torrc_path, const std::string& 
         torrc_file << "CookieAuthentication 1\n"; // ~/.config/neroshop/tor/control_auth_cookie ("locks" the control port)
         torrc_file << "Log notice stdout\n";
         torrc_file << "Log notice file " << (data_dir / "tor.log").string() << "\n";
-        torrc_file << "\n"; // For readability and separating each local peer's hidden service
+        torrc_file << "\n"; // For readability and separating each local user's hidden service
     }
     torrc_file << "HiddenServiceDir " << hidden_service_dir << "\n";
     torrc_file << "HiddenServicePort " << hidden_service_port 

@@ -1697,9 +1697,12 @@ Item {
                                 Connections {
                                     target: ProxyManager
 
+                                    function onTorProgressChanged(percent) {
+                                        //console.log(percent)
+                                    }
+
                                     function onTorReady() {
                                         ProxyManager.useTorProxy();
-                                        ProxyManager.setExternalProcess(true);
                                         proxyBox.currentIndex = proxyBox.model.indexOf("Tor")
                                         toast.showNotification("Tor is ready")
                                     }

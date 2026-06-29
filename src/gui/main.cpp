@@ -126,9 +126,9 @@ int main(int argc, char *argv[])
             return 1;
         }
     }    
-    // Truncate Tor log before starting daemon or proxy
+    // Truncate Tor log before starting daemon and proxy
     {
-        QString torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/tor.log");
+        QString torLogPath = QString::fromStdString(neroshop::get_default_config_path() + "/tor/data/tor.log");
         QFile torLog(torLogPath);
         if (torLog.exists() && torLog.open(QIODevice::WriteOnly | QIODevice::Truncate))
             torLog.close();
