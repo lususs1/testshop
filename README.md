@@ -80,6 +80,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | network data serialization                                             | :heavy_check_mark:                                 |
 | [tor](https://www.torproject.org/)                                 | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
 | [subprocess.h](https://github.com/sheredom/subprocess.h)           | ?                  | process management                                                     | :heavy_check_mark: :package:                       |
+| [microReticulum](https://github.com/attermann/microReticulum)      | ?                  | anonymous network                                                      | :o: :package:                                      |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -115,7 +116,7 @@ sudo apt update && sudo apt install libcurl4-openssl-dev qtdeclarative5-dev qml-
 ```
 Arch
 ```bash
-sudo pacman -Syu --needed curl qt5-declarative qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects boost openssl zeromq libpgm unbound libsodium libunwind xz readline expat gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
+sudo pacman -Syu --needed curl qt5-declarative qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects tor boost openssl zeromq libpgm unbound libsodium libunwind xz readline expat gtest python3 ccache qt5-tools hidapi libusb protobuf systemd
 ```
 Fedora (missing Qt/QML libraries)
 ```bash
@@ -219,14 +220,6 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE)
 ```
 <p align="center">
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
-</p>
-
-**Wownero (WOW):**
-```
-WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi
-```
-<p align="center">
-    <a href="wownero:WW2pQTQWHpyJf2CHrCmZG7Tn3zBnYRZTH8g4U3pSZf5s6xsTXrZc9odDWmrWzjRc9MMQWrKXxjHsRdzH5JpJ7kzx1jZuSVSfi" target="_blank"><img src="assets/images/donate_wow.png" width="128" height="128"></img></a>
 </p>
 
 [**OpenAlias**](https://openalias.org/):

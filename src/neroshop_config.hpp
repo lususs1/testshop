@@ -22,6 +22,7 @@
 inline constexpr uint16_t NEROSHOP_IPC_DEFAULT_PORT = 50880;
 inline constexpr uint16_t NEROSHOP_P2P_DEFAULT_PORT = 50881; // This port will be used by the daemon to establish connections with p2p network // Use ports between 49152-65535 that are not currently registered with IANA and are rarely used
 inline constexpr uint16_t NEROSHOP_RPC_DEFAULT_PORT = 50882; // This port will allow outside clients to interact with neroshop daemon RPC server
+inline constexpr uint16_t RETICULUM_UDP_PORT        = 4242;
 
 // IP Addresses
 inline constexpr const char* NEROSHOP_LOOPBACK_ADDRESS = "127.0.0.1";
@@ -149,6 +150,11 @@ inline const std::initializer_list<BootstrapNode> BOOTSTRAP_I2P_NODES = {
 inline const std::initializer_list<BootstrapNode> BOOTSTRAP_TOR_NODES = {
     { "testkdb44e3v5bh2svemcwnghh4ns372yzyzmqke65kahryoqb565pid.onion", NEROSHOP_P2P_DEFAULT_PORT },
     { "k33yv63yezwur5n2mbuqrb64iwdovnpw7lsuuursu35hvvj24myx2ryd.onion", NEROSHOP_P2P_DEFAULT_PORT }
+};
+
+inline const std::initializer_list<BootstrapNode> BOOTSTRAP_RETICULUM_NODES = {
+    //{ "rmap.world", 4242/*RETICULUM_UDP_PORT*/ },
+    //{ "reticulum.n7ekb.net", 48086 },
 };
 
 }

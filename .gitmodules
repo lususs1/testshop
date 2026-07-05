@@ -22,3 +22,6 @@
 [submodule "external/subprocess.h"]
 	path = external/subprocess.h
 	url = https://github.com/sheredom/subprocess.h.git
+[submodule "external/microReticulum"]
+	path = external/microReticulum
+	url = https://github.com/attermann/microReticulum.git

@@ -215,8 +215,9 @@ int main(int argc, char** argv)
         ("rpc,enable-rpc", "Enables the RPC daemon server")
         ////("conf,config", "Set path to configuration file", cxxopts::value<std::string>()->default_value("/some_path"))
         ("public,public-node", "Make this node publicly accessible")
-        ("network,network-type", "Set anonymous overlay network [i2p | tor]", cxxopts::value<std::string>())
+        ("network,network-type", "Set anonymous overlay network [i2p | tor | reticulum]", cxxopts::value<std::string>())
         ("socks-port", "Set SocksPort in torrc file", cxxopts::value<unsigned int>())
+        ("tor,enable-tor", "Starts Tor so the client can proxy clearnet traffic regardless of network type")
     ;
     
     options.parse_positional({"seed-node"}); // allows for multiple args
@@ -248,7 +249,7 @@ int main(int argc, char** argv)
         // If anonymous overlay network is invalid, throw error
         std::string network = result["network"].as<std::string>();
         std::string network_lower = string_tools::lower(network);
-        if(network_lower != "i2p" && network_lower != "tor") {
+        if(network_lower != "i2p" && network_lower != "tor" && network_lower != "reticulum") {
              throw std::invalid_argument("invalid overlay network");
         }
         
@@ -257,6 +258,8 @@ int main(int argc, char** argv)
             network_type = neroshop::NetworkType::I2P;
         } else if(network_lower == "tor") {
             network_type = neroshop::NetworkType::Tor;
+        } else if(network_lower == "reticulum") {
+            network_type = neroshop::NetworkType::Reticulum;
         }
         
         std::cout << "\033[1;90mSelected overlay network: " << network_lower << "\033[0m\n";
@@ -288,15 +291,17 @@ int main(int argc, char** argv)
     }
     //-------------------------------------------------------
     // Start TorManager on same thread (blocking)
-    // New design idea: Tor should be started regardless of the daemon's network type so that the GUI can always connect to Tor at port 9052. The GUI will also wait for tor to be ready
+    // Note: Tor can be started regardless of the daemon's network type so that the GUI can always connect to Tor at port 9052. The GUI will also wait for tor to be ready before using it to proxy the clearnet
     auto tor_manager = std::make_shared<neroshop::TorManager>(socks_port);
-    tor_manager->start_tor();
+    if((network_type == neroshop::NetworkType::Tor) || result.count("tor")) {
+        tor_manager->start_tor();
 
-    auto start = std::chrono::steady_clock::now();
-    while (!tor_manager->is_tor_ready() && 
-           std::chrono::steady_clock::now() - start < std::chrono::seconds(15)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
+        auto start = std::chrono::steady_clock::now();
+        while (!tor_manager->is_tor_ready() &&
+               std::chrono::steady_clock::now() - start < std::chrono::seconds(15)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            printf("Tor bootstrap progress: %d%%\n", tor_manager->get_bootstrap_progress());
+        }
     }
     //-------------------------------------------------------
     neroshop::Node node(network_type, tor_manager);

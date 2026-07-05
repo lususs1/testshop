@@ -15,6 +15,7 @@
 
 namespace neroshop {
 
+class Reticulum;
 class SamClient;
 class Socks5Client;
 class RoutingTable;
@@ -22,7 +23,7 @@ class KeyMapper;
 struct BootstrapNode;
 class TorManager;
 
-enum class NetworkType { I2P, Tor, Clearnet };
+enum class NetworkType { I2P, Tor, Reticulum, Clearnet };
 
 enum class NodeStatus { Dead, Inactive, Active };
 
@@ -93,6 +94,7 @@ public:
     
     // Getters
     std::string get_id() const; // get ID of this node
+    Reticulum * get_reticulum_client() const;
     Socks5Client * get_socks5_client() const;
     std::shared_ptr<TorManager> get_tor_manager() const;
     SamClient * get_sam_client() const;
@@ -140,6 +142,7 @@ public:
 private:
     std::string get_i2p_address() const; // base32 public key
     std::string get_tor_address() const;
+    std::string get_reticulum_address() const;
     ////std::string get_clearnet_address() const;
     // Callbacks
     void on_ping(const std::vector<uint8_t>& buffer, const std::string& destination);
@@ -152,6 +155,7 @@ private:
     // Main loops
     void run_i2p();
     void run_tor();
+    void run_reticulum();
     
     std::string generate_node_id(const std::string& address, int port = -1); // Use integer for checking invalids
     // Determines if node1 is closer to the target_id than node2
@@ -165,6 +169,7 @@ private:
     std::string id; // immutable and set only once in constructor so a mutex wouldn't make sense
     std::string i2p_address; // immutable and set only once in constructor so a mutex wouldn't make sense
     std::string tor_address;
+    std::string reticulum_address;
     std::atomic<uint16_t> port_;
     static NetworkType network_type_;
     std::unordered_map<std::string, std::string> data; // internal hash table that stores key-value pairs 
@@ -173,6 +178,7 @@ private:
     mutable std::shared_mutex providers_mutex;
     std::unique_ptr<SamClient> sam_client;
     std::unique_ptr<Socks5Client> socks5_client;
+    std::unique_ptr<Reticulum> reticulum_client;
     std::unique_ptr<RoutingTable> routing_table;
     std::unique_ptr<KeyMapper> key_mapper;
     std::atomic<bool> bootstrap;
@@ -183,6 +189,7 @@ private:
     std::unordered_map<std::string, std::unique_ptr<Socks5Client>> tor_peers;
     std::mutex tor_peers_mutex;
     void handle_tor_message(std::vector<uint8_t> message, const std::string& sender_onion, uint16_t sender_port);
+    void handle_reticulum_message(const std::vector<uint8_t>& message);
     std::chrono::steady_clock::time_point start_time;
     // For all background threads
     void stop_threads();

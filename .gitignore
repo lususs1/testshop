@@ -8,6 +8,10 @@ external/CMakeCache.txt
 external/cmake_install.cmake
 external/Makefile
 
+external/microReticulum/CMakeFiles
+external/microReticulum/cmake_install.cmake
+external/microReticulum/Makefile
+
 external/msgpack-c/CMakeFiles
 external/msgpack-c/CMakeCache.txt
 external/msgpack-c/cmake_install.cmake

@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0167 NEW)
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
 
 set(CMAKE_CXX_STANDARD 17)
@@ -422,8 +423,13 @@ if(EXISTS "${NEROSHOP_PROTO_SRC_DIR}/message.pb.cc" AND NEROSHOP_USE_PROTOBUF)
 endif()
 
 ######################################
+# microReticulum
+set(microreticulum_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/microReticulum/src ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/arduinojson-src/src ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/microstore-src/include ${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/crypto-src) # v0.5.0 (c02b6e3d985567cced4450fb65902106ebda5a39)
+set(microreticulum_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmicroReticulum.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libCryptoLib.a)
+
+######################################
 # neroshop link directories
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # target_link_directories only available in CMake version 3.13 :(
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # TODO: Use target_link_directories
 
 ######################################
 # neroshop core source files
@@ -448,13 +454,16 @@ set(neroshop_market_src
     ${NEROSHOP_CORE_SRC_DIR}/market/user.cpp 
 )
 
-set(neroshop_network_src 
+set(neroshop_network_src
+    ${NEROSHOP_CORE_SRC_DIR}/network/reticulum.cpp
     ${NEROSHOP_CORE_SRC_DIR}/network/sam_client.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/network/socks5_client.cpp 
+    ${NEROSHOP_CORE_SRC_DIR}/network/tcp_interface.cpp
     ${NEROSHOP_CORE_SRC_DIR}/network/tor_manager.cpp
+    ${NEROSHOP_CORE_SRC_DIR}/network/udp_interface.cpp
 )
 
-set(neroshop_price_src 
+set(neroshop_price_src
     ${NEROSHOP_CORE_SRC_DIR}/price_api/coincodex/coincodex.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price_api/coingecko/coingecko.cpp 
     ${NEROSHOP_CORE_SRC_DIR}/price_api/coinmarketcap/coinmarketcap.cpp 
@@ -508,12 +517,22 @@ add_executable(${neroshop_daemon} src/daemon/main.cpp ${neroshop_daemon_src})
 install(TARGETS ${neroshop_daemon} DESTINATION bin)
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_DEBUG)
+    # If microReticulum was built with RNS_SANITIZE=ON, this is required:
+    target_compile_options(${neroshop_daemon} PRIVATE -fsanitize=address -fno-omit-frame-pointer -g -O0)
+    target_link_options(${neroshop_daemon} PRIVATE -fsanitize=address)
 endif()
-target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${subprocess_include_dir} ${cxxopts_include_dir})
-target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} #[[${zlib_src}]] ${fmt_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
+target_include_directories(${neroshop_daemon} PRIVATE #[[${CMAKE_CURRENT_SOURCE_DIR}/src/]] ${monero_include_dirs} ${monero_cpp_include_dir} ${sqlite_include_dir} ${json_include_dir} ${zlib_include_dir} #[[${i2pd_include_dirs}]] ${fmt_include_dir} ${microreticulum_include_dir} ${subprocess_include_dir} ${cxxopts_include_dir})
+target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sqlite_src} ${monero_src} #[[${zlib_src}]] ${fmt_src} ${microreticulum_src})#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl") # fixes undefined reference to symbol 'dlsym@@GLIBC_2.2.5' error
 if(NEROSHOP_USE_PROTOBUF)
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_PROTOBUF)
 endif()
+# ???
+target_compile_definitions(${neroshop_daemon} PRIVATE
+    RNS_KNOWN_DESTINATIONS_SEGMENT_SIZE=65536   # placeholder — confirm reasonable value
+    RNS_KNOWN_DESTINATIONS_SEGMENT_COUNT=3
+    RNS_PATH_TABLE_SEGMENT_SIZE=65536           # you'll likely need this pair too, for the same reason
+    RNS_PATH_TABLE_SEGMENT_COUNT=3
+)
 
 ######################################
 # neroshop-console
