@@ -80,7 +80,7 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | network data serialization                                             | :heavy_check_mark:                                 |
 | [tor](https://www.torproject.org/)                                 | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
 | [subprocess.h](https://github.com/sheredom/subprocess.h)           | ?                  | process management                                                     | :heavy_check_mark: :package:                       |
-| [microReticulum](https://github.com/attermann/microReticulum)      | ?                  | anonymous network                                                      | :o: :package:                                      |
+| [microReticulum](https://github.com/attermann/microReticulum)      | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -196,11 +196,21 @@ make -j$(nproc)
 
 ### Setting up i2p
 1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
+```bash
+#sudo apt install default-jre # <- Debian/Ubuntu
+#sudo pacman -S jre-openjdk   # <- Arch
+java -jar i2pinstall_<version>.jar
+```
 2. After installation, open the terminal and start I2P with the following command: 
 ```bash
 /home/$USER/i2p/i2prouter start
 ```
-3. In your browser, visit http://127.0.0.1:7657/configclients. Scroll down to enable the **SAM application bridge** and then apply the changes
+3. In your browser, visit http://127.0.0.1:7657/configclients. Scroll down to enable the **SAM application bridge** and then save the configuration.
+4. Restart I2P for the changes to take effect:
+```bash
+/home/$USER/i2p/i2prouter stop
+/home/$USER/i2p/i2prouter start
+```
    
    SAM should now be enabled. Please wait a few minutes before starting neroshop
 
@@ -221,9 +231,6 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE)
 <p align="center">
     <a href="monero:83QbQvnnyo7515rEnW8XwF1hbP5qMab6sHXFzP6pg3EKGscgXCbVjbt1FX5SF7AV9p4Ur1tiommuQSzrQQRHkZicVYu6j8Y" target="_blank"><img src="assets/images/donate_xmr.png" width="128" height="128"></img></a>
 </p>
-
-[**OpenAlias**](https://openalias.org/):
-~`donate.neroshop.org` or `donate@neroshop.org`~
 
 
 ## Resources

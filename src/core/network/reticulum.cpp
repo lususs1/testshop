@@ -249,7 +249,8 @@ std::string Reticulum::create_identity(const std::string& keyfile_path) {
 
 std::string Reticulum::create_destination(const char* app_name, const char* aspects) {
     if (!identity) {
-        create_identity();
+        std::string key_file = neroshop::get_default_config_path() + "/reticulum_identity.key";
+        create_identity(key_file);
     }
     destination = RNS::Destination(
         identity,
