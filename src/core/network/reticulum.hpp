@@ -12,7 +12,11 @@
 #include <string>
 #include <functional>
 
+#include <microStore/FileSystem.h>
+#include <microStore/Adapters/PosixFileSystem.h>
+
 #include <microReticulum.h>
+#include <microReticulum/Transport.h>
 
 namespace neroshop {
 
@@ -38,11 +42,14 @@ public:
 
     void set_packet_handler(std::function<void(const std::vector<uint8_t>&)> cb);
 
+    void set_peer_discovered_handler(std::function<void(const std::string&)> cb);
+
     RNS::Reticulum reticulum;
     RNS::Interface udp_interface;
     RNS::Interface tcp_interface;
     RNS::Identity identity;
     RNS::Destination destination;
+    microStore::FileSystem filesystem;
 private:
     static void on_packet_static(const RNS::Bytes& data, const RNS::Packet& packet);
     void on_packet(const RNS::Bytes& data, const RNS::Packet& packet);
@@ -53,6 +60,26 @@ private:
     // (see the onPacket()/onPingPacket() examples), not a std::function, so we
     // need a single static trampoline back into whichever instance registered last.
     static Reticulum* instance_;
+
+    RNS::HAnnounceHandler announce_handler{nullptr};
+    std::function<void(const std::string&)> peer_discovered_callback;
+};
+
+class NeroshopAnnounceHandler : public RNS::AnnounceHandler {
+public:
+    NeroshopAnnounceHandler(std::function<void(const std::string&)> on_peer_found)
+    : RNS::AnnounceHandler("neroshop.node"), _on_peer_found(std::move(on_peer_found)) {}
+
+    virtual void received_announce(const RNS::Bytes& destination_hash,
+                                   const RNS::Identity& announced_identity,
+                                   const RNS::Bytes& app_data) override {
+                                       if (_on_peer_found) {
+                                           _on_peer_found(destination_hash.toHex());
+                                       }
+                                   }
+
+private:
+    std::function<void(const std::string&)> _on_peer_found;
 };
 
 }

@@ -190,6 +190,7 @@ private:
     std::mutex tor_peers_mutex;
     void handle_tor_message(std::vector<uint8_t> message, const std::string& sender_onion, uint16_t sender_port);
     void handle_reticulum_message(const std::vector<uint8_t>& message);
+    void handle_reticulum_peer_discovered(const std::string& destination_hash_hex);
     std::chrono::steady_clock::time_point start_time;
     // For all background threads
     void stop_threads();

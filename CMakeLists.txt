@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-cmake_policy(SET CMP0167 NEW)
+#cmake_policy(SET CMP0167 NEW)
 project(neroshop) # tested on Ubuntu 20.04 LTS (focal) with gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
 
 set(CMAKE_CXX_STANDARD 17)
@@ -428,6 +428,9 @@ set(microreticulum_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/external/microReticul
 set(microreticulum_src ${CMAKE_CURRENT_SOURCE_DIR}/build/libmicroReticulum.a ${CMAKE_CURRENT_SOURCE_DIR}/build/libCryptoLib.a)
 
 ######################################
+# microLXMF
+
+######################################
 # neroshop link directories
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/build) # TODO: Use target_link_directories
 
@@ -526,13 +529,6 @@ target_link_libraries(${neroshop_daemon} #[[${i2pd_src}]] ${monero_cpp_src} ${sq
 if(NEROSHOP_USE_PROTOBUF)
     target_compile_definitions(${neroshop_daemon} PRIVATE NEROSHOP_USE_PROTOBUF)
 endif()
-# ???
-target_compile_definitions(${neroshop_daemon} PRIVATE
-    RNS_KNOWN_DESTINATIONS_SEGMENT_SIZE=65536   # placeholder — confirm reasonable value
-    RNS_KNOWN_DESTINATIONS_SEGMENT_COUNT=3
-    RNS_PATH_TABLE_SEGMENT_SIZE=65536           # you'll likely need this pair too, for the same reason
-    RNS_PATH_TABLE_SEGMENT_COUNT=3
-)
 
 ######################################
 # neroshop-console

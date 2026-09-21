@@ -3,12 +3,8 @@
 #include "../../neroshop_config.hpp" // get_default_config_path()
 
 // microReticulum headers
-#include <microStore/FileSystem.h>
-#include <microStore/Adapters/PosixFileSystem.h>
 #include "udp_interface.hpp"
 #include "tcp_interface.hpp"
-
-#include <microReticulum.h>
 
 namespace neroshop {
 //namespace net {
@@ -29,6 +25,18 @@ Reticulum* Reticulum::instance_ = nullptr;
 //-----------------------------------------------------------------------------
 
 bool Reticulum::start() {
+    #if defined(RNS_MEM_LOG)
+    RNS::loglevel(RNS::LOG_MEM);
+    #else
+    //RNS::loglevel(RNS::LOG_WARNING);
+    //RNS::loglevel(RNS::LOG_DEBUG);
+    RNS::loglevel(RNS::LOG_TRACE);
+    #endif
+
+    RNS::Identity::known_store_segment_size(65536);
+    RNS::Identity::known_store_segment_count(8);
+    //---------------------------------------------
+
     INFO("Setting up Reticulum...");
     instance_ = this;
 
@@ -37,7 +45,7 @@ bool Reticulum::start() {
 
         // Initialize and register filesystem
         INFO("Registering FileSystem with OS...");
-        microStore::FileSystem filesystem{microStore::Adapters::PosixFileSystem()};
+        filesystem = microStore::FileSystem{microStore::Adapters::PosixFileSystem()};
         filesystem.init();
         RNS::Utilities::OS::register_filesystem(filesystem);
 
@@ -50,16 +58,24 @@ bool Reticulum::start() {
 
         INFO("Creating Reticulum instance...");
         reticulum = RNS::Reticulum();
-        reticulum.transport_enabled(false);
+        reticulum.transport_enabled(true); // known_store/path_store initialization is tied directly to transport_enabled(true) - turn on to prevent "failed to store identity" errors
         reticulum.probe_destination_enabled(true);
-        //reticulum.remote_management_enabled(true); // <- uncomment if transport=true
+        //reticulum.remote_management_enabled(true);
         reticulum.start();
 
-        std::string keyfile = neroshop::get_default_config_path() + "/reticulum_identity.key";
+        std::string key_file = neroshop::get_default_config_path() + "/reticulum_identity.key";
         // Set up identity + destination + inbound callback right away so
         // Node can immediately announce()/send() after start() returns.
-        create_identity(keyfile);
+        create_identity(key_file);
         create_destination("neroshop", "node");
+
+        announce_handler = RNS::HAnnounceHandler(new NeroshopAnnounceHandler([this](const std::string& peer_hash) {
+            if (peer_discovered_callback) {
+                peer_discovered_callback(peer_hash);
+            }
+        }));
+        HEAD("Registering announce handler with Transport...", RNS::LOG_TRACE);
+        RNS::Transport::register_announce_handler(announce_handler);
 
         INFO("RNS Transport Ready!");
         return true;
@@ -351,6 +367,11 @@ void Reticulum::on_packet(const RNS::Bytes& data, const RNS::Packet& /*packet*/)
 }
 
 //-----------------------------------------------------------------------------
+
+void Reticulum::set_peer_discovered_handler(std::function<void(const std::string&)> cb) {
+    peer_discovered_callback = std::move(cb);
+}
+
 //-----------------------------------------------------------------------------
 
 }

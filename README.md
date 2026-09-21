@@ -75,12 +75,13 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 | [linenoise](https://github.com/antirez/linenoise)                  | ?                  | command line interface                                                 | :heavy_check_mark: :white_square_button: :package: |
 | [lua](https://www.lua.org/)                                        | 5.1.5              | custom plugins                                                         | :heavy_check_mark: :package:                       |
 | [cxxopts](https://github.com/jarro2783/cxxopts)                    | ?                  | command line option parser                                             | :heavy_check_mark: :package:                       |
-| [i2pd](https://github.com/PurpleI2P/i2pd)                          | ?                  | anonymous network                                                      | :o: :package:                                      |
+| [i2pd](https://github.com/PurpleI2P/i2pd)                          | ?                  | anonymous network                                                      | :x: :package:                                      |
 | [fmt](https://github.com/fmtlib/fmt)                               | ?                  | log formatting                                                         | :heavy_check_mark: :package:                       |
 | [protobuf](https://github.com/protocolbuffers/protobuf)            | ?                  | network data serialization                                             | :heavy_check_mark:                                 |
-| [tor](https://www.torproject.org/)                                 | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
+| [tor](https://www.torproject.org/)                                 | ?                  | anonymous network                                                      | :heavy_check_mark:                                 |
 | [subprocess.h](https://github.com/sheredom/subprocess.h)           | ?                  | process management                                                     | :heavy_check_mark: :package:                       |
 | [microReticulum](https://github.com/attermann/microReticulum)      | ?                  | anonymous network                                                      | :heavy_check_mark: :package:                       |
+| [microLXMF](https://github.com/torlando-tech/microLXMF)            | ?                  | messaging protocol                                                     | :grey_question: :package:                          |
 
 ### Compiling neroshop from source
 **0. Install prerequisites**
@@ -112,7 +113,7 @@ cd testshop
 
 Debian/Ubuntu
 ```bash
-sudo apt update && sudo apt install libcurl4-openssl-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes qml-module-qtquick-dialogs pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
+sudo apt update && sudo apt install libcurl4-openssl-dev qtdeclarative5-dev qml-module-qt-labs-platform qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qtquick-shapes qml-module-qtquick-dialogs tor pkg-config libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev libreadline6-dev libexpat1-dev libpgm-dev qttools5-dev-tools libhidapi-dev libusb-1.0-0-dev libprotobuf-dev protobuf-compiler libudev-dev libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev libboost-program-options-dev libboost-regex-dev libboost-serialization-dev libboost-system-dev libboost-thread-dev python3 ccache
 ```
 Arch
 ```bash

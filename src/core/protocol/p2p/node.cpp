@@ -116,6 +116,11 @@ Node::Node(NetworkType network_type, std::shared_ptr<neroshop::TorManager> tor_m
                 this->handle_reticulum_message(data);
             });
 
+            // Set peer discovered handler
+            reticulum_client->set_peer_discovered_handler([this](const std::string& peer_hash) {
+                this->handle_reticulum_peer_discovered(peer_hash);
+            });
+
             std::string dest_hash = reticulum_client->announce("neroshop");
             this->reticulum_address = dest_hash;   // new member, mirrors i2p_address/tor_address
             this->id = generate_node_id(this->reticulum_address);
@@ -154,6 +159,12 @@ Node::Node(const std::string& address, uint16_t port) : check_counter(0), start_
             this->tor_address = address;
             this->id = generate_node_id(address);
             this->port_ = port;
+            break;
+        }
+        case NetworkType::Reticulum: {
+            this->reticulum_address = address;
+            this->id = generate_node_id(address);
+            this->port_ = port; // unused for Reticulum, kept for signature consistency
             break;
         }
     }
@@ -2481,6 +2492,14 @@ void Node::handle_reticulum_message(const std::vector<uint8_t>& message) {
         log_warn("handle_reticulum_message: Unknown protobuf message type received");
     }
     #endif
+}
+
+//-----------------------------------------------------------------------------
+
+void Node::handle_reticulum_peer_discovered(const std::string& destination_hash_hex) {
+    log_info("Discovered neroshop peer via Reticulum: {}", destination_hash_hex);
+    auto node = std::make_unique<Node>(destination_hash_hex, 0); // port unused for Reticulum addressing
+    routing_table->add_node(std::move(node));
 }
 
 //-----------------------------------------------------------------------------

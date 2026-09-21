@@ -138,46 +138,7 @@ set_target_properties(i2pd PROPERTIES
 # -----------------------------------------------------------------------------
 # tor
 # -----------------------------------------------------------------------------
-# Detect OS
-set(TOR_BROWSER_VERSION "15.0.16")
-if(WIN32)
-    set(TOR_OS "windows")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(TOR_OS "linux")
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-     set(TOR_OS "macos")
-else()
-    message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
-endif()
-# Detect Architecture
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
-    set(TOR_ARCH "x86_64")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]86|x86")
-    set(TOR_ARCH "i686")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
-    set(TOR_ARCH "aarch64")
-else()
-    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-endif()
-# Construct URL and filename
-set(TOR_URL "https://archive.torproject.org/tor-package-archive/torbrowser/${TOR_BROWSER_VERSION}/tor-expert-bundle-${TOR_OS}-${TOR_ARCH}-${TOR_BROWSER_VERSION}.tar.gz")
-set(TOR_FILE_NAME "tor-expert-bundle-${TOR_OS}-${TOR_ARCH}-${TOR_BROWSER_VERSION}.tar.gz")
-#message(STATUS "Tor URL: ${TOR_URL}")
-set(TOR_INSTALL_DIR "$ENV{HOME}/.config/neroshop")
-# Fetch binaries
-include(ExternalProject)
-ExternalProject_Add(
-    tor
-    URL "${TOR_URL}"
-    PREFIX "${CMAKE_SOURCE_DIR}/../build/_deps"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND 
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${TOR_INSTALL_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory 
-                "${CMAKE_SOURCE_DIR}/../build/tor_extract" "${TOR_INSTALL_DIR}"
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/../build/tor_extract"
-)
+
 
 # -----------------------------------------------------------------------------
 # microReticulum
@@ -187,8 +148,8 @@ set(RNS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(RNS_BUILD_INTEROP OFF CACHE BOOL "" FORCE)
 set(USTORE_USE_POSIXFS ON CACHE BOOL "" FORCE)
 set(RNS_USE_PROVISIONING OFF CACHE BOOL "" FORCE)
-set(RNS_DEBUG_MEMORY ON CACHE BOOL "" FORCE) # for debug only
-set(RNS_SANITIZE ON CACHE BOOL "" FORCE) # for debug only
+set(RNS_DEBUG_MEMORY ON CACHE BOOL "" FORCE) # for debug purposes only
+set(RNS_SANITIZE ON CACHE BOOL "" FORCE) # for debug purposes only
 set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/../build/_deps"
     CACHE PATH "FetchContent base directory" FORCE)
 add_subdirectory(microReticulum)
@@ -202,6 +163,12 @@ set_target_properties(CryptoLib PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../build"
 )
+#target_compile_definitions(microReticulum PRIVATE USTORE_ENABLE_LOG) # for debug purposes only
+
+# -----------------------------------------------------------------------------
+# microLXMF
+# -----------------------------------------------------------------------------
+
 
 # cmake .
 # make -j$(nproc)
