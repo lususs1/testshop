@@ -17,7 +17,10 @@ NeroShop is a decentralized peer-to-peer marketplace for trading goods and servi
 - [Building neroshop](#building-neroshop)
   - [Dependencies](#dependencies)
   - [Compiling neroshop from source](#compiling-neroshop-from-source)
-  - [Setting up i2p](#setting-up-i2p)
+- [Choosing a network](#choosing-a-network)
+  - [Using Tor (default)](#using-tor-default)
+  - [Using i2p](#using-i2p)
+  - [Using Reticulum](#using-reticulum)
 - [Contributing](#contributing) <!-- - [Bug Bounty Program]-->
 - [License](#license)
 - [Donations](#donations)
@@ -188,14 +191,14 @@ cd build
 cmake .. #-DNEROSHOP_BUILD_CLI=1 #-DNEROSHOP_BUILD_TESTS=1
 make -j$(nproc)
 ```
-
-```bash
-# Run neroshop
-./neroshop
-```
 > Other supported build systems: [`Meson`](https://mesonbuild.com/) (broken - for now)
 
-### Setting up i2p
+
+## Choosing a network
+
+### Using Tor (default)
+
+### Using i2p
 1. Download the Java I2P from the [official website](https://geti2p.net/en/download)
 ```bash
 #sudo apt install default-jre # <- Debian/Ubuntu
@@ -212,8 +215,22 @@ java -jar i2pinstall_<version>.jar
 /home/$USER/i2p/i2prouter stop
 /home/$USER/i2p/i2prouter start
 ```
-   
-   SAM should now be enabled. Please wait a few minutes before starting neroshop
+5. SAM is now enabled. Please wait a few minutes before starting `neroshopd` with I2P as the network type, followed by `neroshop` in a separate terminal:
+```bash
+./neroshopd --network=i2p
+```
+```bash
+./neroshop
+```
+
+### Using Reticulum
+1. First, start `neroshopd` with Reticulum as the network type. Then, in a separate terminal, start `neroshop`:
+```bash
+./neroshopd --network=reticulum
+```
+```bash
+./neroshop
+```
 
 
 ## Contributing
